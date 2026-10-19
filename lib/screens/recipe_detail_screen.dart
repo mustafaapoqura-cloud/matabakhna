@@ -30,33 +30,6 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
     });
   }
 
-  void _addToShoppingList() async {
-    await StorageService.addIngredientsToShopping(
-      widget.recipe.ingredients,
-      widget.recipe.name,
-    );
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            const Icon(Icons.check_circle, color: Colors.white),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                'تمت إضافة مقادير (${widget.recipe.name}) لقائمة مشترياتك!',
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-            ),
-          ],
-        ),
-        backgroundColor: AppTheme.success,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -187,40 +160,24 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                   ),
                   const SizedBox(height: 24),
 
-                  // Ingredients Header with Add to Shopping List button
+                  // Ingredients Header
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(6),
-                            decoration: BoxDecoration(
-                              color: AppTheme.primary.withAlpha(25),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: const Icon(Icons.egg_alt_rounded, color: AppTheme.primary, size: 20),
-                          ),
-                          const SizedBox(width: 8),
-                          const Text(
-                            'المقادير والمكونات',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: AppTheme.textPrimary,
-                            ),
-                          ),
-                        ],
-                      ),
-                      TextButton.icon(
-                        onPressed: _addToShoppingList,
-                        icon: const Icon(Icons.playlist_add_rounded, size: 18),
-                        label: const Text(
-                          'لقائمة الطلبات',
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                      Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primary.withAlpha(25),
+                          borderRadius: BorderRadius.circular(8),
                         ),
-                        style: TextButton.styleFrom(
-                          foregroundColor: AppTheme.primary,
+                        child: const Icon(Icons.egg_alt_rounded, color: AppTheme.primary, size: 20),
+                      ),
+                      const SizedBox(width: 8),
+                      const Text(
+                        'المقادير والمكونات',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.textPrimary,
                         ),
                       ),
                     ],

@@ -9,7 +9,6 @@ import '../widgets/budget_summary_card.dart';
 import 'budget_planner_screen.dart';
 import 'recipes_screen.dart';
 import 'recipe_detail_screen.dart';
-import 'shopping_list_screen.dart';
 import 'meal_planner_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -49,7 +48,6 @@ class _HomeScreenState extends State<HomeScreen> {
       _buildHomeDashboard(),
       const BudgetPlannerScreen(),
       const RecipesScreen(),
-      const ShoppingListScreen(),
       const MealPlannerScreen(),
     ];
 
@@ -96,10 +94,6 @@ class _HomeScreenState extends State<HomeScreen> {
             BottomNavigationBarItem(
               icon: Icon(Icons.restaurant_menu_rounded),
               label: 'الأكلات',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.shopping_basket_rounded),
-              label: 'قائمة السوق',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.calendar_month_rounded),
