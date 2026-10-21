@@ -1,5 +1,8 @@
 import 'dart:math';
+import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:matebakhna/screens/shopping_list_screen.dart';
+import 'package:matebakhna/screens/widget/app_bar.dart';
 import '../models/recipe.dart';
 import '../models/budget_plan.dart';
 import '../services/storage_service.dart';
@@ -52,58 +55,146 @@ class _HomeScreenState extends State<HomeScreen> {
     ];
 
     return Scaffold(
-      body: IndexedStack(
+        extendBody: true,
+        extendBodyBehindAppBar: true,
+
+appBar: _currentIndex == 0
+    ? CustomAppBar.homeAppBar(
+        onSurpriseMe: _showSurpriseMe,
+      )
+    : null,      body: IndexedStack(
         index: _currentIndex,
         children: screens,
       ),
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withAlpha(15),
-              blurRadius: 10,
-              offset: const Offset(0, -2),
-            ),
-          ],
+     
+        
+   
+bottomNavigationBar: ClipRRect(
+  borderRadius: const BorderRadius.only(
+    topLeft: Radius.circular(35),
+    topRight: Radius.circular(35),
+  ),
+  child: BackdropFilter(
+    filter: ImageFilter.blur(
+      sigmaX: 18,
+      sigmaY: 18,
+    ),
+    child: Container(
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.18),
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(35),
+          topRight: Radius.circular(35),
         ),
-        child: BottomNavigationBar(
-          currentIndex: _currentIndex,
-          onTap: (index) {
-            setState(() {
-              _currentIndex = index;
-            });
-            if (index == 0) _refreshData();
-          },
-          type: BottomNavigationBarType.fixed,
-          backgroundColor: Colors.white,
-          selectedItemColor: AppTheme.primary,
-          unselectedItemColor: Colors.grey.shade500,
-          selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
-          unselectedLabelStyle: const TextStyle(fontSize: 11),
-          elevation: 0,
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.home_rounded),
-              label: 'الرئيسية',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.account_balance_wallet_rounded),
-              label: 'الميزانية',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.restaurant_menu_rounded),
-              label: 'الأكلات',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.calendar_month_rounded),
-              label: 'جدول الأسبوع',
-            ),
+        border: Border.all(
+          color: Colors.white.withOpacity(0.45),
+          width: 1.2,
+        ),
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Colors.white.withOpacity(0.35),
+            Colors.white.withOpacity(0.12),
           ],
         ),
       ),
-    );
+      padding: EdgeInsets.only(
+        top: 8,
+        bottom: MediaQuery.of(context).padding.bottom + 8,
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          _navIcon(Icons.home, 'الرئيسية', 0),
+          _navIcon(
+            Icons.account_balance_wallet_outlined,
+            'الميزانية',
+            1,
+          ),
+          _navIcon(Icons.restaurant_menu, 'الأكلات', 2),
+          _navIcon(
+            Icons.calendar_month_outlined,
+            'جدول الأسبوع',
+            3,
+          ),
+         
+        ],
+      ),
+    ),
+  ),
+),
+);
   }
+Widget _navIcon(IconData icon, String label, int index) {
+  final selected = _currentIndex == index;
+
+  return GestureDetector(
+    onTap: () {
+      setState(() {
+        _currentIndex = index;
+      });
+
+      if (index == 0) {
+        _refreshData();
+      }
+    },
+    child: AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      curve: Curves.fastLinearToSlowEaseIn,
+      clipBehavior: Clip.antiAlias,
+      margin: EdgeInsets.only(bottom: selected ? 15 : 0),
+      padding: const EdgeInsets.symmetric(
+        horizontal: 12,
+        vertical: 5,
+      ),
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(
+            color: selected ? Colors.white : Colors.transparent,
+            width: 4,
+          ),
+          right: BorderSide(
+            color: selected ? Colors.white : Colors.transparent,
+            width: 4,
+          ),
+        ),
+        boxShadow: selected
+            ? [
+                BoxShadow(
+                  color: AppTheme.primary.withOpacity(0.6),
+                  blurRadius: 8,
+                  offset: const Offset(0, 6),
+                ),
+              ]
+            : [],
+        
+        borderRadius: BorderRadius.circular(35),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
+            color: selected ? Colors.white : Colors.grey.shade600,
+            size: selected ? 26 : 24,
+          ),
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 11,
+              color: selected ? Colors.white : AppTheme.primary,
+              fontWeight: selected ? FontWeight.w900 : FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
 
   Widget _buildHomeDashboard() {
     final budgetDishes = _allRecipes
@@ -200,7 +291,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     onPressed: () {
                       setState(() => _currentIndex = 2);
                     },
-                    child: const Text('عرض الكل'),
+                    child: const Text( 'عرض الكل »'),
                   ),
                 ],
               ),
@@ -426,67 +517,116 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void _showSurpriseMe() {
-    if (_allRecipes.isEmpty) return;
-    final r = _allRecipes[Random().nextInt(_allRecipes.length)];
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Row(
-          children: [
-            Text('🎲', style: TextStyle(fontSize: 24)),
-            SizedBox(width: 8),
-            Text('حليتي مشكلة الغداء!'),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: Image.network(
-                r.imageUrl,
-                height: 130,
-                width: double.infinity,
-                fit: BoxFit.cover,
-                errorBuilder: (c, e, s) => Container(
-                  height: 130,
-                  color: AppTheme.primary.withAlpha(20),
-                  child: const Icon(Icons.restaurant, color: AppTheme.primary),
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              r.name,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'التكلفة: حوالي ${r.estimatedCost.toInt()} ج • الوقت: ${r.totalTimeMinutes} دقيقة',
-              style: const TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w600, fontSize: 13),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('اقتراح آخر'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => RecipeDetailScreen(recipe: r)),
-              );
-            },
-            child: const Text('عرض الوصفة'),
-          ),
-        ],
-      ),
+
+void _showSurpriseMe() {
+  if (_allRecipes.isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('أضيفي وصفات الأول!')),
     );
+    return;
   }
+
+  final random = Random();
+  var r = _allRecipes[random.nextInt(_allRecipes.length)];
+
+  showDialog(
+    context: context,
+    builder: (dialogContext) {
+      return StatefulBuilder(
+        builder: (context, setDialogState) {
+          return AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            title: const Row(
+              children: [
+                Text('🎲', style: TextStyle(fontSize: 24)),
+                SizedBox(width: 8),
+                Expanded(child: Text('حليتي مشكلة الغداء!')),
+              ],
+            ),
+         content: SizedBox(
+  width: MediaQuery.of(context).size.width * 0.7,
+  child: Column(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: Image.network(
+          r.imageUrl,
+          height: 130,
+          width: double.infinity,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) => Container(
+            height: 130,
+            width: double.infinity,
+            color: AppTheme.primary.withAlpha(20),
+            alignment: Alignment.center,
+            child: const Icon(
+              Icons.restaurant,
+              color: AppTheme.primary,
+              size: 40,
+            ),
+          ),
+        ),
+      ),
+      const SizedBox(height: 12),
+      Text(
+        r.name,
+        style: const TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.bold,
+        ),
+        textAlign: TextAlign.center,
+      ),
+      const SizedBox(height: 4),
+      Text(
+        'التكلفة: حوالي ${r.estimatedCost.toInt()} ج'
+        ' • الوقت: ${r.totalTimeMinutes} دقيقة',
+        style: const TextStyle(
+          color: AppTheme.primary,
+          fontWeight: FontWeight.w600,
+          fontSize: 13,
+        ),
+        textAlign: TextAlign.center,
+      ),
+    ],
+  ),
+),
+
+
+  actions: [
+              TextButton(
+                onPressed: () {
+                  if (_allRecipes.length < 2) return;
+
+                  final previousRecipe = r;
+                  do {
+                    r = _allRecipes[random.nextInt(_allRecipes.length)];
+                  } while (identical(r, previousRecipe));
+
+                  setDialogState(() {});
+                },
+                child: const Text('اقتراح آخر'),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(dialogContext);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => RecipeDetailScreen(recipe: r),
+                    ),
+                  );
+                },
+                child: const Text('عرض الوصفة'),
+              ),
+            ],
+          );
+        },
+      );
+    },
+  );
+}
+
 }

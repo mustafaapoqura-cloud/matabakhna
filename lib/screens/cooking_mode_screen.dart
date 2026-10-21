@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:matebakhna/screens/widget/app_bar.dart';
 import '../models/recipe.dart';
 import '../theme/app_theme.dart';
 
@@ -149,19 +150,15 @@ class _CookingModeScreenState extends State<CookingModeScreen> {
 
     return Scaffold(
       backgroundColor: const Color(0xFF1E1E24), // Dark kitchen friendly mode
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF141517),
-        iconTheme: const IconThemeData(color: Colors.white),
-        title: Text(
-          'وضع الطبخ: ${widget.recipe.name}',
-          style: const TextStyle(color: Colors.white, fontSize: 16),
-        ),
-        centerTitle: true,
+     
+      appBar : CustomAppBar.batbakhnaBar(context: context , title: 'وضع الطبخ: ${widget.recipe.name}',
+
       ),
       body: SafeArea(
         child: Column(
           children: [
             // Timer Bar
+            SizedBox(height: 10,),
             Container(
               margin: const EdgeInsets.all(16),
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
