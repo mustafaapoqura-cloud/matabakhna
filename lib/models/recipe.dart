@@ -62,6 +62,7 @@ class Recipe {
   final List<String> tips;
   final int calories;
   final bool isUserAdded;
+  final bool isFeatured;
 
   const Recipe({
     required this.id,
@@ -79,6 +80,7 @@ class Recipe {
     this.tips = const [],
     this.calories = 450,
     this.isUserAdded = false,
+    this.isFeatured = false,
   });
 
   int get totalTimeMinutes => prepTimeMinutes + cookTimeMinutes;
@@ -102,13 +104,14 @@ class Recipe {
         'tips': tips,
         'calories': calories,
         'isUserAdded': isUserAdded,
+        'isFeatured': isFeatured,
       };
 
   factory Recipe.fromJson(Map<String, dynamic> json) => Recipe(
         id: json['id'] as String,
         name: json['name'] as String,
         category: RecipeCategory.values.firstWhere(
-          (c) => c.name == json['category'],
+          (c) => c.name.toLowerCase() == (json['category'] as String?)?.toLowerCase(),
           orElse: () => RecipeCategory.egyptian,
         ),
         imageUrl: json['imageUrl'] as String,
@@ -135,5 +138,6 @@ class Recipe {
             [],
         calories: json['calories'] as int? ?? 450,
         isUserAdded: json['isUserAdded'] as bool? ?? false,
+        isFeatured: json['isFeatured'] == true || json['isFeatured'] == 1 || json['isFeatured'] == '1',
       );
 }

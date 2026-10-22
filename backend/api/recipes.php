@@ -29,6 +29,23 @@ function formatRecipe(array $row): array {
     ];
 }
 
+// Handle set_featured action
+if (isset($_GET['action']) && $_GET['action'] === 'set_featured') {
+    $id = $_GET['id'] ?? null;
+    $db->exec("UPDATE recipes SET isFeatured = 0");
+    if ($id && $id !== 'clear' && $id !== 'none' && $id !== '0') {
+        $stmt = $db->prepare("UPDATE recipes SET isFeatured = 1 WHERE id = ?");
+        $stmt->execute([$id]);
+        $setStmt = $db->prepare("REPLACE INTO settings (`key`, `value`) VALUES ('dish_of_the_day_id', ?)");
+        $setStmt->execute([$id]);
+        echo json_encode(['success' => true, 'message' => 'تم تعيين أكلة اليوم المقترحة بنجاح ⭐', 'featuredId' => $id], JSON_UNESCAPED_UNICODE);
+    } else {
+        $db->exec("DELETE FROM settings WHERE `key` = 'dish_of_the_day_id'");
+        echo json_encode(['success' => true, 'message' => 'تمت إزالة أكلة اليوم المقترحة', 'featuredId' => null], JSON_UNESCAPED_UNICODE);
+    }
+    exit();
+}
+
 switch ($method) {
     case 'GET':
         // Get single recipe by ID

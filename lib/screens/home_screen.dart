@@ -37,11 +37,7 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() {
       _budgetPlan = StorageService.getBudgetPlan();
       _allRecipes = StorageService.getAllRecipes();
-      if (_allRecipes.isNotEmpty) {
-        // Deterministic daily dish based on day of year
-        final dayOfYear = DateTime.now().difference(DateTime(DateTime.now().year, 1, 1)).inDays;
-        _dishOfTheDay = _allRecipes[dayOfYear % _allRecipes.length];
-      }
+      _updateDishOfTheDay();
     });
 
     // Sync with PHP backend in background
@@ -49,15 +45,18 @@ class _HomeScreenState extends State<HomeScreen> {
       if (mounted) {
         setState(() {
           _allRecipes = latest;
-          if (_allRecipes.isNotEmpty) {
-            final dayOfYear = DateTime.now().difference(DateTime(DateTime.now().year, 1, 1)).inDays;
-            _dishOfTheDay = _allRecipes[dayOfYear % _allRecipes.length];
-          } else {
-            _dishOfTheDay = null;
-          }
+          _updateDishOfTheDay();
         });
       }
     });
+  }
+
+  void _updateDishOfTheDay() {
+    try {
+      _dishOfTheDay = _allRecipes.firstWhere((r) => r.isFeatured);
+    } catch (_) {
+      _dishOfTheDay = null;
+    }
   }
 
   @override
@@ -212,10 +211,6 @@ Widget _navIcon(IconData icon, String label, int index) {
 
 
   Widget _buildHomeDashboard() {
-    final budgetDishes = _allRecipes
-        .where((r) => r.costTier == CostTier.budget || r.estimatedCost <= 80)
-        .toList();
-
     return SafeArea(
       child: RefreshIndicator(
         onRefresh: () async => _refreshData(),
@@ -355,125 +350,80 @@ Widget _navIcon(IconData icon, String label, int index) {
 
               const SizedBox(height: 16),
 
-              // Budget friendly dishes horizontal scroll
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Expanded(
-                    child: Row(
+              // Dynamic Category Sections: Each category with recipes is shown!
+              ...RecipeCategory.values.where((cat) {
+                return _allRecipes.any((r) => r.category == cat);
+              }).map((category) {
+                final categoryRecipes = _allRecipes.where((r) => r.category == category).toList();
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 20),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text('🪙', style: TextStyle(fontSize: 18)),
-                        SizedBox(width: 6),
                         Expanded(
-                          child: Text(
-                            'أكلات اقتصادية على قد الإيد',
-                            style: TextStyle(
-                              fontSize: 17,
-                              fontWeight: FontWeight.bold,
-                              color: AppTheme.textPrimary,
-                            ),
-                            overflow: TextOverflow.ellipsis,
+                          child: Row(
+                            children: [
+                              Text(category.emoji, style: const TextStyle(fontSize: 20)),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  category.label,
+                                  style: const TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppTheme.textPrimary,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
                           ),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => RecipesScreen(
+                                  initialCategory: category,
+                                ),
+                              ),
+                            );
+                          },
+                          child: const Text('المزيد »'),
                         ),
                       ],
                     ),
-                  ),
-                  TextButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const RecipesScreen(
-                            initialCategory: RecipeCategory.budgetFriendly,
-                          ),
-                        ),
-                      );
-                    },
-                    child: const Text('المزيد'),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              SizedBox(
-                height: 220,
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: budgetDishes.length,
-                  itemBuilder: (context, index) {
-                    final recipe = budgetDishes[index];
-                    return RecipeCard(
-                      recipe: recipe,
-                      isCompact: true,
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => RecipeDetailScreen(recipe: recipe),
-                          ),
-                        ).then((_) => _refreshData());
-                      },
-                    );
-                  },
-                ),
-              ),
+                    const SizedBox(height: 10),
+                    SizedBox(
+                      height: 220,
+                      child: ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: categoryRecipes.length,
+                        itemBuilder: (context, index) {
+                          final recipe = categoryRecipes[index];
+                          return RecipeCard(
+                            recipe: recipe,
+                            isCompact: true,
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => RecipeDetailScreen(recipe: recipe),
+                                ),
+                              ).then((_) => _refreshData());
+                            },
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                );
+              }),
 
               const SizedBox(height: 24),
-
-              // Egyptian Authentic Cuisine
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Expanded(
-                    child: Row(
-                      children: [
-                        Text('🍲', style: TextStyle(fontSize: 18)),
-                        SizedBox(width: 6),
-                        Expanded(
-                          child: Text(
-                            'أكل مصري أصيل',
-                            style: TextStyle(
-                              fontSize: 17,
-                              fontWeight: FontWeight.bold,
-                              color: AppTheme.textPrimary,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  TextButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const RecipesScreen(
-                            initialCategory: RecipeCategory.egyptian,
-                          ),
-                        ),
-                      );
-                    },
-                    child: const Text('المزيد'),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              ..._allRecipes
-                  .where((r) => r.category == RecipeCategory.egyptian)
-                  .take(2)
-                  .map((recipe) => RecipeCard(
-                        recipe: recipe,
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => RecipeDetailScreen(recipe: recipe),
-                            ),
-                          ).then((_) => _refreshData());
-                        },
-                      )),
-
-              const SizedBox(height: 20),
             ],
           ),
         ),

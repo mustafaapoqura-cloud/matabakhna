@@ -232,6 +232,30 @@ export default function App() {
     }
   };
 
+  const getCategoryName = (catId) => {
+    const c = categories.find(cat => cat.id === catId);
+    return c ? `${c.emoji} ${c.name}` : catId;
+  };
+
+  // Toggle Featured Recipe (أكلة اليوم المقترحة)
+  const handleToggleFeaturedRecipe = async (recipe) => {
+    try {
+      const willBeFeatured = !recipe.isFeatured;
+      const res = await api.setFeaturedRecipe(willBeFeatured ? recipe.id : 'clear');
+      if (res && res.success) {
+        showToast(willBeFeatured ? `تم تعيين "${recipe.name}" كأكلة اليوم المقترحة للتطبيق ⭐` : 'تمت إزالة أكلة اليوم المقترحة');
+        setRecipes(prev => prev.map(r => ({
+          ...r,
+          isFeatured: willBeFeatured ? (r.id === recipe.id) : false
+        })));
+      } else {
+        showToast(res.message || 'فشل تحديث أكلة اليوم', 'error');
+      }
+    } catch (err) {
+      showToast('حدث خطأ أثناء تحديث أكلة اليوم', 'error');
+    }
+  };
+
   // Category Handlers
   const handleOpenCreateCategoryModal = () => {
     setEditingCategory(null);
@@ -650,6 +674,118 @@ export default function App() {
               </select>
             </div>
 
+            {/* Featured Recipe Banner (أكلة اليوم المقترحة في الصفحة الرئيسية) */}
+            {(() => {
+              const featuredRecipe = recipes.find(r => r.isFeatured);
+              return (
+                <div style={{
+                  background: featuredRecipe 
+                    ? 'linear-gradient(135deg, rgba(232, 89, 12, 0.08) 0%, rgba(245, 159, 0, 0.12) 100%)' 
+                    : 'var(--surface)',
+                  border: featuredRecipe ? '2px solid #f59f00' : '1px dashed var(--border)',
+                  borderRadius: 'var(--radius-lg)',
+                  padding: '16px 20px',
+                  marginBottom: 20,
+                  boxShadow: featuredRecipe ? '0 4px 18px rgba(245, 159, 0, 0.15)' : 'none'
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 14 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                      <div style={{
+                        width: 48,
+                        height: 48,
+                        borderRadius: 'var(--radius-md)',
+                        background: featuredRecipe ? '#f59f00' : 'var(--bg)',
+                        color: featuredRecipe ? '#fff' : 'var(--text-secondary)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: 24,
+                        boxShadow: featuredRecipe ? '0 2px 8px rgba(245, 159, 0, 0.3)' : 'none'
+                      }}>
+                        ⭐
+                      </div>
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <h4 style={{ fontSize: 16, fontWeight: 800, margin: 0, color: 'var(--text-primary)' }}>
+                            أكلة اليوم المقترحة (في الصفحة الرئيسية بالتطبيق)
+                          </h4>
+                          {featuredRecipe && (
+                            <span style={{ background: '#f59f00', color: '#fff', fontSize: 11, padding: '2px 8px', borderRadius: 12, fontWeight: 700 }}>
+                              معروضة حالياً في التطبيق
+                            </span>
+                          )}
+                        </div>
+                        {featuredRecipe ? (
+                          <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: '4px 0 0 0' }}>
+                            الوصفة المختارة: <strong style={{ color: 'var(--primary)', fontSize: 14 }}>{featuredRecipe.name}</strong>
+                            {featuredRecipe.category && ` (${getCategoryName(featuredRecipe.category)})`}
+                            {` • التكلفة: ${featuredRecipe.estimatedCost} ج.م`}
+                          </p>
+                        ) : (
+                          <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: '4px 0 0 0' }}>
+                            لم يتم تعيين أكلة مقترحة لليوم بعد. اختر أي أكلة واضغط زر (اجعلها أكلة اليوم ⭐) لتظهر فوراً بالتطبيق.
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                      {featuredRecipe ? (
+                        <>
+                          <button 
+                            type="button" 
+                            className="btn btn-secondary btn-sm"
+                            style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 700 }}
+                            onClick={() => handleOpenEditModal(featuredRecipe)}
+                          >
+                            <Edit2 size={14} color="var(--primary)" />
+                            <span>تعديل الأكلة</span>
+                          </button>
+                          <button 
+                            type="button" 
+                            className="btn btn-sm"
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 6,
+                              fontWeight: 700,
+                              color: 'var(--danger)',
+                              background: 'rgba(250, 82, 82, 0.1)',
+                              border: '1px solid rgba(250, 82, 82, 0.25)'
+                            }}
+                            onClick={() => handleToggleFeaturedRecipe(featuredRecipe)}
+                          >
+                            <X size={15} />
+                            <span>إزالة من أكلة اليوم</span>
+                          </button>
+                        </>
+                      ) : (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <select 
+                            className="select-filter"
+                            style={{ minWidth: 220, padding: '7px 12px', fontSize: 13 }}
+                            defaultValue=""
+                            onChange={(e) => {
+                              if (e.target.value) {
+                                const found = recipes.find(r => r.id === e.target.value);
+                                if (found) handleToggleFeaturedRecipe(found);
+                                e.target.value = '';
+                              }
+                            }}
+                          >
+                            <option value="" disabled>اختر أكلة لتحديدها كأكلة اليوم ⭐</option>
+                            {recipes.map(r => (
+                              <option key={r.id} value={r.id}>{r.name} ({r.estimatedCost} ج.م)</option>
+                            ))}
+                          </select>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+
             {/* Results Header */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
               <span style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 600 }}>
@@ -697,6 +833,26 @@ export default function App() {
                 <div key={recipe.id} className="recipe-card-admin">
                   <div className="recipe-img-box">
                     <img src={recipe.imageUrl} alt={recipe.name} />
+                    {recipe.isFeatured && (
+                      <div style={{
+                        position: 'absolute',
+                        top: 10,
+                        left: 10,
+                        background: '#f59f00',
+                        color: '#fff',
+                        padding: '4px 10px',
+                        borderRadius: 20,
+                        fontSize: 12,
+                        fontWeight: 800,
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 4,
+                        zIndex: 2
+                      }}>
+                        ⭐ أكلة اليوم المقترحة
+                      </div>
+                    )}
                     <div className="badge-overlay">
                       {recipe.costTier === 'budget' && '🟢 اقتصادي'}
                       {recipe.costTier === 'medium' && '🟡 متوسط'}
@@ -726,22 +882,35 @@ export default function App() {
                       </div>
                     </div>
 
-                    <div className="recipe-card-actions">
+                    <div className="recipe-card-actions" style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                       <button 
                         className="btn btn-secondary btn-sm"
                         onClick={() => setViewRecipeModal(recipe)}
+                        title="معاينة"
                       >
                         <Eye size={14} /> معاينة
                       </button>
                       <button 
                         className="btn btn-secondary btn-sm"
                         onClick={() => handleOpenEditModal(recipe)}
+                        title="تعديل"
                       >
                         <Edit2 size={14} /> تعديل
                       </button>
                       <button 
+                        type="button"
+                        className={`btn btn-sm ${recipe.isFeatured ? 'btn-primary' : 'btn-secondary'}`}
+                        style={recipe.isFeatured ? { background: '#f59f00', borderColor: '#f59f00', color: '#fff', fontWeight: 700 } : { fontWeight: 700 }}
+                        onClick={() => handleToggleFeaturedRecipe(recipe)}
+                        title={recipe.isFeatured ? 'إلغاء أكلة اليوم' : 'تعيين كأكلة اليوم'}
+                      >
+                        <Sparkles size={14} />
+                        <span>{recipe.isFeatured ? 'أكلة اليوم ⭐' : 'اجعلها أكلة اليوم'}</span>
+                      </button>
+                      <button 
                         className="btn btn-danger btn-sm"
                         onClick={() => setDeleteConfirmId(recipe.id)}
+                        title="حذف"
                       >
                         <Trash2 size={14} />
                       </button>

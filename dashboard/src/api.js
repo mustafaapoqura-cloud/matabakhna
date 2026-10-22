@@ -57,6 +57,13 @@ export const api = {
     return res.json();
   },
 
+  async setFeaturedRecipe(id) {
+    const res = await fetch(`${API_BASE}/recipes.php?action=set_featured&id=${encodeURIComponent(id || 'clear')}`, {
+      method: 'POST',
+    });
+    return res.json();
+  },
+
   // Categories
   async getCategories() {
     const res = await fetch(`${API_BASE}/categories.php`);
