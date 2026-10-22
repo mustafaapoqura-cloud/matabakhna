@@ -272,12 +272,16 @@ export default function App() {
     }
 
     try {
-      await api.saveCategory({
+      const res = await api.saveCategory({
         id: catId,
         name: categoryFormData.name.trim(),
         emoji: categoryFormData.emoji.trim() || '🍲',
         description: categoryFormData.description.trim()
       });
+      if (res && res.success === false) {
+        showToast(res.message || 'فشل حفظ القسم', 'error');
+        return;
+      }
       showToast(editingCategory ? 'تم تعديل بيانات القسم بنجاح 🎉' : 'تمت إضافة القسم بنجاح للمطبخ 🎉');
       setCategoryModalOpen(false);
       setEditingCategory(null);
@@ -292,10 +296,18 @@ export default function App() {
 
   const handleConfirmDeleteCategory = async () => {
     if (!deleteCategoryConfirm) return;
+    const catIdToDelete = deleteCategoryConfirm.id;
+    const catNameToDelete = deleteCategoryConfirm.name;
     try {
-      await api.deleteCategory(deleteCategoryConfirm.id);
-      showToast(`تم حذف قسم "${deleteCategoryConfirm.name}" بنجاح 🗑️`);
+      const res = await api.deleteCategory(catIdToDelete);
+      if (res && res.success === false) {
+        showToast(res.message || 'فشل حذف القسم', 'error');
+        return;
+      }
+      showToast(`تم حذف قسم "${catNameToDelete}" بنجاح 🗑️`);
       setDeleteCategoryConfirm(null);
+      // Instant optimistic UI update
+      setCategories(prev => prev.filter(c => c.id !== catIdToDelete));
       const catsRes = await api.getCategories();
       if (catsRes && catsRes.data) {
         setCategories(catsRes.data);
