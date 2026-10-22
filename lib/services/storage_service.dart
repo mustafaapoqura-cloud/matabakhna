@@ -91,18 +91,19 @@ class StorageService {
     final custom = getCustomRecipes();
     final remote = getRemoteCachedRecipes();
 
-    // Merge initial, remote and custom without duplicates
-    final Map<String, Recipe> map = {};
-    for (var r in RecipeData.initialRecipes) {
-      map[r.id] = r;
+    // Prioritize real data from backend/custom recipes, avoid fake initial mock data
+    if (remote.isNotEmpty || custom.isNotEmpty) {
+      final Map<String, Recipe> map = {};
+      for (var r in remote) {
+        map[r.id] = r;
+      }
+      for (var r in custom) {
+        map[r.id] = r;
+      }
+      return map.values.toList();
     }
-    for (var r in remote) {
-      map[r.id] = r;
-    }
-    for (var r in custom) {
-      map[r.id] = r;
-    }
-    return map.values.toList();
+
+    return [];
   }
 
   static Recipe? getRecipeById(String id) {

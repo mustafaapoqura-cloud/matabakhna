@@ -369,7 +369,9 @@ Widget _navIcon(IconData icon, String label, int index) {
                               const SizedBox(width: 8),
                               Expanded(
                                 child: Text(
-                                  category.label,
+                                  category == RecipeCategory.budgetFriendly 
+                                    ? 'أكلات اقتصادية على قد الإيد' 
+                                    : category.label,
                                   style: const TextStyle(
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,

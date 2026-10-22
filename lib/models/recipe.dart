@@ -111,8 +111,20 @@ class Recipe {
         id: json['id'] as String,
         name: json['name'] as String,
         category: RecipeCategory.values.firstWhere(
-          (c) => c.name.toLowerCase() == (json['category'] as String?)?.toLowerCase(),
-          orElse: () => RecipeCategory.egyptian,
+          (c) {
+            final cat = (json['category'] as String?)?.toLowerCase().trim() ?? '';
+            return c.name.toLowerCase() == cat || 
+                   c.label.toLowerCase() == cat ||
+                   cat.contains(c.name.toLowerCase()) ||
+                   cat.contains(c.label.toLowerCase()) ||
+                   (cat.contains('اقتصاد') && c == RecipeCategory.budgetFriendly) ||
+                   (cat.contains('مصر') && c == RecipeCategory.egyptian) ||
+                   (cat.contains('شعب') && c == RecipeCategory.popular) ||
+                   (cat.contains('غرب') && c == RecipeCategory.western) ||
+                   (cat.contains('حلو') && c == RecipeCategory.desserts) ||
+                   (cat.contains('صح') && c == RecipeCategory.healthy);
+          },
+          orElse: () => RecipeCategory.budgetFriendly,
         ),
         imageUrl: json['imageUrl'] as String,
         description: json['description'] as String,
