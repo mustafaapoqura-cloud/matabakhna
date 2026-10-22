@@ -32,10 +32,14 @@ switch ($method) {
         $emoji = trim($data['emoji'] ?? '🍲');
         $desc = trim($data['description'] ?? '');
 
-        $stmt = $db->prepare("REPLACE INTO categories (id, name, emoji, description) VALUES (?, ?, ?, ?)");
-        $stmt->execute([$id, $name, $emoji, $desc]);
-
-        echo json_encode(['success' => true, 'message' => 'تم حفظ التصنيف بنجاح'], JSON_UNESCAPED_UNICODE);
+        try {
+            $stmt = $db->prepare("REPLACE INTO categories (id, name, emoji, description) VALUES (?, ?, ?, ?)");
+            $stmt->execute([$id, $name, $emoji, $desc]);
+            echo json_encode(['success' => true, 'message' => 'تم حفظ التصنيف بنجاح', 'id' => $id], JSON_UNESCAPED_UNICODE);
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['success' => false, 'message' => 'فشل حفظ التصنيف: ' . $e->getMessage()], JSON_UNESCAPED_UNICODE);
+        }
         break;
 
     case 'DELETE':
@@ -46,9 +50,19 @@ switch ($method) {
             exit();
         }
 
-        $stmt = $db->prepare("DELETE FROM categories WHERE id = ?");
-        $stmt->execute([$id]);
-        echo json_encode(['success' => true, 'message' => 'تم حذف التصنيف'], JSON_UNESCAPED_UNICODE);
+        try {
+            // Unlink any recipes tied to this category so foreign keys or filters don't break
+            $updateStmt = $db->prepare("UPDATE recipes SET category = 'other' WHERE category = ?");
+            $updateStmt->execute([$id]);
+
+            $stmt = $db->prepare("DELETE FROM categories WHERE id = ?");
+            $stmt->execute([$id]);
+
+            echo json_encode(['success' => true, 'message' => 'تم حذف التصنيف بنجاح'], JSON_UNESCAPED_UNICODE);
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['success' => false, 'message' => 'فشل حذف التصنيف: ' . $e->getMessage()], JSON_UNESCAPED_UNICODE);
+        }
         break;
 
     default:

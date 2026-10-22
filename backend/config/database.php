@@ -162,7 +162,32 @@ class Database {
     }
 
     private static function seedCategoriesAndSettings(PDO $db, string $driver): void {
-        // Seed default categories
+        // Prevent re-seeding default categories on every request so deleted categories stay deleted!
+        try {
+            $stmt = $db->query("SELECT `value` FROM settings WHERE `key` = 'seeds_initialized' LIMIT 1");
+            $val = $stmt ? $stmt->fetchColumn() : null;
+            if ($val === '1') {
+                return; // Already initialized, never re-seed deleted categories!
+            }
+        } catch (Exception $e) {
+            // ignore
+        }
+
+        // If categories already exist, mark initialized and exit
+        try {
+            $catCount = (int)$db->query("SELECT COUNT(*) FROM categories")->fetchColumn();
+            if ($catCount > 0) {
+                $initSql = ($driver === 'mysql')
+                    ? "INSERT INTO settings (`key`, `value`) VALUES ('seeds_initialized', '1') ON DUPLICATE KEY UPDATE `value`='1'"
+                    : "INSERT OR REPLACE INTO settings (`key`, `value`) VALUES ('seeds_initialized', '1')";
+                $db->exec($initSql);
+                return;
+            }
+        } catch (Exception $e) {
+            // ignore
+        }
+
+        // Seed default categories ONLY once on clean install
         $categories = [
             ['id' => 'egyptian', 'name' => 'أكل مصري أصيل', 'emoji' => '🍲', 'description' => 'أطباق المطبخ المصري التراثية الفاخرة والطواجن المحمرة'],
             ['id' => 'popular', 'name' => 'أكل شعبي', 'emoji' => '🥙', 'description' => 'أكلات الشارع المصري المحبوبة كشري وحواوشي وكبدة'],
@@ -190,7 +215,8 @@ class Database {
             ['currency', 'ج.م'],
             ['dailyBudgetSuggestion', '150'],
             ['weeklyBudgetSuggestion', '1000'],
-            ['monthlyBudgetSuggestion', '4000']
+            ['monthlyBudgetSuggestion', '4000'],
+            ['seeds_initialized', '1']
         ];
 
         $setSql = ($driver === 'mysql')
