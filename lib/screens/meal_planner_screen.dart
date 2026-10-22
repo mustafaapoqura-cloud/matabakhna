@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:matebakhna/screens/widget/app_bar.dart';
 import '../models/recipe.dart';
 import '../services/storage_service.dart';
 import '../theme/app_theme.dart';
@@ -151,16 +152,14 @@ class _MealPlannerScreenState extends State<MealPlannerScreen> {
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('جدول وجبات الأسبوع'),
-        actions: [
-          IconButton(
+      appBar:
+      CustomAppBar.batbakhnaBar(context: context ,
+       title: 'جدول وجبات الأسبوع',  wid:  IconButton(
             icon: const Icon(Icons.auto_awesome, color: AppTheme.secondary),
             tooltip: 'اقتراح ذكي للأسبوع',
             onPressed: _autoSuggestWeeklyPlan,
-          ),
-        ],
-      ),
+          ),),
+      
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(

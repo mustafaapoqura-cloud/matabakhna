@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/recipe.dart';
-import '../services/storage_service.dart';
+import '../services/api_service.dart';
 import '../theme/app_theme.dart';
 
 class AddRecipeScreen extends StatefulWidget {
@@ -127,7 +127,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
       isUserAdded: true,
     );
 
-    await StorageService.saveCustomRecipe(newRecipe);
+    await ApiService.createRecipe(newRecipe);
 
     if (!mounted) return;
     Navigator.pop(context, true);

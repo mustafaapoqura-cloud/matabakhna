@@ -62,6 +62,7 @@ class Recipe {
   final List<String> tips;
   final int calories;
   final bool isUserAdded;
+  final bool isFeatured;
 
   const Recipe({
     required this.id,
@@ -79,6 +80,7 @@ class Recipe {
     this.tips = const [],
     this.calories = 450,
     this.isUserAdded = false,
+    this.isFeatured = false,
   });
 
   int get totalTimeMinutes => prepTimeMinutes + cookTimeMinutes;
@@ -102,14 +104,27 @@ class Recipe {
         'tips': tips,
         'calories': calories,
         'isUserAdded': isUserAdded,
+        'isFeatured': isFeatured,
       };
 
   factory Recipe.fromJson(Map<String, dynamic> json) => Recipe(
         id: json['id'] as String,
         name: json['name'] as String,
         category: RecipeCategory.values.firstWhere(
-          (c) => c.name == json['category'],
-          orElse: () => RecipeCategory.egyptian,
+          (c) {
+            final cat = (json['category'] as String?)?.toLowerCase().trim() ?? '';
+            return c.name.toLowerCase() == cat || 
+                   c.label.toLowerCase() == cat ||
+                   cat.contains(c.name.toLowerCase()) ||
+                   cat.contains(c.label.toLowerCase()) ||
+                   (cat.contains('اقتصاد') && c == RecipeCategory.budgetFriendly) ||
+                   (cat.contains('مصر') && c == RecipeCategory.egyptian) ||
+                   (cat.contains('شعب') && c == RecipeCategory.popular) ||
+                   (cat.contains('غرب') && c == RecipeCategory.western) ||
+                   (cat.contains('حلو') && c == RecipeCategory.desserts) ||
+                   (cat.contains('صح') && c == RecipeCategory.healthy);
+          },
+          orElse: () => RecipeCategory.budgetFriendly,
         ),
         imageUrl: json['imageUrl'] as String,
         description: json['description'] as String,
@@ -135,5 +150,6 @@ class Recipe {
             [],
         calories: json['calories'] as int? ?? 450,
         isUserAdded: json['isUserAdded'] as bool? ?? false,
+        isFeatured: json['isFeatured'] == true || json['isFeatured'] == 1 || json['isFeatured'] == '1',
       );
 }

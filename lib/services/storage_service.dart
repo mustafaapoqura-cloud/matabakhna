@@ -8,6 +8,7 @@ import '../data/recipe_data.dart';
 class StorageService {
   static const String _keyFavorites = 'matebakhna_favorites';
   static const String _keyCustomRecipes = 'matebakhna_custom_recipes';
+  static const String _keyRemoteCache = 'matebakhna_remote_recipes';
   static const String _keyShoppingList = 'matebakhna_shopping_list';
   static const String _keyBudgetPlan = 'matebakhna_budget_plan';
   static const String _keyWeeklyPlan = 'matebakhna_weekly_plan';
@@ -19,6 +20,16 @@ class StorageService {
   }
 
   // --- المفضلة Favorites ---
+  static const String _keySeenOnboarding = 'matebakhna_seen_onboarding';
+
+  static bool hasSeenOnboarding() {
+    return _prefs?.getBool(_keySeenOnboarding) ?? false;
+  }
+
+  static Future<void> setSeenOnboarding() async {
+    await _prefs?.setBool(_keySeenOnboarding, true);
+  }
+
   static Set<String> getFavoriteIds() {
     final list = _prefs?.getStringList(_keyFavorites) ?? [];
     return list.toSet();
@@ -69,10 +80,40 @@ class StorageService {
     await _prefs?.setString(_keyCustomRecipes, raw);
   }
 
+  static Future<void> cacheRemoteRecipes(List<Recipe> recipes) async {
+    final raw = jsonEncode(recipes.map((r) => r.toJson()).toList());
+    await _prefs?.setString(_keyRemoteCache, raw);
+  }
+
+  static List<Recipe> getRemoteCachedRecipes() {
+    final raw = _prefs?.getString(_keyRemoteCache);
+    if (raw == null || raw.isEmpty) return [];
+    try {
+      final List<dynamic> list = jsonDecode(raw);
+      return list.map((item) => Recipe.fromJson(item as Map<String, dynamic>)).toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
   // --- كل الوصفات مدمجة All Recipes ---
   static List<Recipe> getAllRecipes() {
     final custom = getCustomRecipes();
-    return [...custom, ...RecipeData.initialRecipes];
+    final remote = getRemoteCachedRecipes();
+
+    // Prioritize real data from backend/custom recipes, avoid fake initial mock data
+    if (remote.isNotEmpty || custom.isNotEmpty) {
+      final Map<String, Recipe> map = {};
+      for (var r in remote) {
+        map[r.id] = r;
+      }
+      for (var r in custom) {
+        map[r.id] = r;
+      }
+      return map.values.toList();
+    }
+
+    return [];
   }
 
   static Recipe? getRecipeById(String id) {
