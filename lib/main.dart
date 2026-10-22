@@ -3,15 +3,18 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'services/storage_service.dart';
 import 'theme/app_theme.dart';
 import 'screens/home_screen.dart';
+import 'screens/onboarding_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await StorageService.init();
-  runApp(const MatebakhnaApp());
+  final showOnboarding = !StorageService.hasSeenOnboarding();
+  runApp(MatebakhnaApp(showOnboarding: showOnboarding));
 }
 
 class MatebakhnaApp extends StatelessWidget {
-  const MatebakhnaApp({super.key});
+  final bool showOnboarding;
+  const MatebakhnaApp({super.key, this.showOnboarding = true});
 
   @override
   Widget build(BuildContext context) {
@@ -29,7 +32,7 @@ class MatebakhnaApp extends StatelessWidget {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      home: const HomeScreen(),
+      home: showOnboarding ? const OnboardingScreen() : const HomeScreen(),
     );
   }
 }

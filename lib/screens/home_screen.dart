@@ -2,6 +2,7 @@ import 'dart:math';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:matebakhna/screens/widget/app_bar.dart';
+import 'onboarding_screen.dart';
 import '../models/recipe.dart';
 import '../models/budget_plan.dart';
 import '../services/storage_service.dart';
@@ -75,6 +76,12 @@ class _HomeScreenState extends State<HomeScreen> {
 appBar: _currentIndex == 0
     ? CustomAppBar.homeAppBar(
         onSurpriseMe: _showSurpriseMe,
+        onOpenOnboarding: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const OnboardingScreen()),
+          );
+        },
       )
     : null,      body: IndexedStack(
         index: _currentIndex,

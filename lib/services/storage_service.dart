@@ -20,6 +20,16 @@ class StorageService {
   }
 
   // --- المفضلة Favorites ---
+  static const String _keySeenOnboarding = 'matebakhna_seen_onboarding';
+
+  static bool hasSeenOnboarding() {
+    return _prefs?.getBool(_keySeenOnboarding) ?? false;
+  }
+
+  static Future<void> setSeenOnboarding() async {
+    await _prefs?.setBool(_keySeenOnboarding, true);
+  }
+
   static Set<String> getFavoriteIds() {
     final list = _prefs?.getStringList(_keyFavorites) ?? [];
     return list.toSet();

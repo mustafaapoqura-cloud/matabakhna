@@ -9,6 +9,7 @@ class CustomAppBar {
 
 static PreferredSizeWidget homeAppBar({
   required VoidCallback onSurpriseMe,
+  VoidCallback? onOpenOnboarding,
 }) {
   return PreferredSize(
     preferredSize: const Size.fromHeight(100),
@@ -81,6 +82,16 @@ static PreferredSizeWidget homeAppBar({
                 ),
                 tooltip: 'اقترح لي أكلة عشوائية!',
               ),
+              if (onOpenOnboarding != null)
+                IconButton(
+                  onPressed: onOpenOnboarding,
+                  icon: const Icon(
+                    Icons.info_outline_rounded,
+                    color: Colors.white,
+                    size: 25,
+                  ),
+                  tooltip: 'دليل وتعريف تطبيق طبختنا',
+                ),
             ],
           ),
         ),
