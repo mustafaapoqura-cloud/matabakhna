@@ -60,6 +60,8 @@ export default function App() {
 
   // Category Modal State
   const [categoryModalOpen, setCategoryModalOpen] = useState(false);
+  const [editingCategory, setEditingCategory] = useState(null);
+  const [deleteCategoryConfirm, setDeleteCategoryConfirm] = useState(null);
   const [categoryFormData, setCategoryFormData] = useState({
     id: '',
     name: '',
@@ -232,12 +234,25 @@ export default function App() {
 
   // Category Handlers
   const handleOpenCreateCategoryModal = () => {
+    setEditingCategory(null);
     setCategoryFormData({
       id: '',
       name: '',
       emoji: '🍲',
       description: '',
       idManual: false
+    });
+    setCategoryModalOpen(true);
+  };
+
+  const handleOpenEditCategoryModal = (cat) => {
+    setEditingCategory(cat);
+    setCategoryFormData({
+      id: cat.id,
+      name: cat.name || '',
+      emoji: cat.emoji || '🍲',
+      description: cat.description || '',
+      idManual: true
     });
     setCategoryModalOpen(true);
   };
@@ -249,10 +264,10 @@ export default function App() {
       return;
     }
 
-    let catId = categoryFormData.id.trim();
+    let catId = editingCategory ? editingCategory.id : categoryFormData.id.trim();
     if (!catId) {
       catId = 'cat_' + Date.now().toString().slice(-6);
-    } else {
+    } else if (!editingCategory) {
       catId = catId.toLowerCase().replace(/[^a-z0-9_]/g, '_');
     }
 
@@ -263,8 +278,9 @@ export default function App() {
         emoji: categoryFormData.emoji.trim() || '🍲',
         description: categoryFormData.description.trim()
       });
-      showToast('تمت إضافة القسم بنجاح للمطبخ 🎉');
+      showToast(editingCategory ? 'تم تعديل بيانات القسم بنجاح 🎉' : 'تمت إضافة القسم بنجاح للمطبخ 🎉');
       setCategoryModalOpen(false);
+      setEditingCategory(null);
       const catsRes = await api.getCategories();
       if (catsRes && catsRes.data) {
         setCategories(catsRes.data);
@@ -274,11 +290,12 @@ export default function App() {
     }
   };
 
-  const handleDeleteCategory = async (catId) => {
-    if (!window.confirm('هل أنت متأكد من حذف هذا القسم؟')) return;
+  const handleConfirmDeleteCategory = async () => {
+    if (!deleteCategoryConfirm) return;
     try {
-      await api.deleteCategory(catId);
-      showToast('تم حذف القسم بنجاح');
+      await api.deleteCategory(deleteCategoryConfirm.id);
+      showToast(`تم حذف قسم "${deleteCategoryConfirm.name}" بنجاح 🗑️`);
+      setDeleteCategoryConfirm(null);
       const catsRes = await api.getCategories();
       if (catsRes && catsRes.data) {
         setCategories(catsRes.data);
@@ -773,26 +790,16 @@ export default function App() {
                         }}>
                           {cat.emoji}
                         </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                          <span style={{
-                            background: 'var(--primary-alpha10)',
-                            color: 'var(--primary)',
-                            fontWeight: 700,
-                            fontSize: 12.5,
-                            padding: '4px 10px',
-                            borderRadius: 20
-                          }}>
-                            {count} وصفة
-                          </span>
-                          <button
-                            title="حذف هذا القسم"
-                            className="btn btn-sm"
-                            style={{ color: 'var(--danger)', background: 'rgba(250, 82, 82, 0.08)', borderRadius: 'var(--radius-sm)', padding: '6px 8px' }}
-                            onClick={() => handleDeleteCategory(cat.id)}
-                          >
-                            <Trash2 size={15} />
-                          </button>
-                        </div>
+                        <span style={{
+                          background: 'var(--primary-alpha10)',
+                          color: 'var(--primary)',
+                          fontWeight: 700,
+                          fontSize: 12.5,
+                          padding: '4px 10px',
+                          borderRadius: 20
+                        }}>
+                          {count} وصفة
+                        </span>
                       </div>
 
                       <div>
@@ -818,6 +825,54 @@ export default function App() {
                         <code style={{ background: 'var(--bg)', padding: '2px 8px', borderRadius: 4, fontWeight: 600, color: 'var(--primary)' }}>
                           {cat.id}
                         </code>
+                      </div>
+
+                      {/* أزرار الإجراءات للقسم: تعديل وحذف */}
+                      <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: '1fr 1fr',
+                        gap: 8,
+                        marginTop: 14,
+                        paddingTop: 12,
+                        borderTop: '1px solid var(--border)'
+                      }}>
+                        <button
+                          type="button"
+                          className="btn btn-secondary btn-sm"
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: 6,
+                            fontWeight: 700,
+                            padding: '8px 10px',
+                            borderRadius: 'var(--radius-sm)'
+                          }}
+                          onClick={() => handleOpenEditCategoryModal(cat)}
+                        >
+                          <Edit2 size={15} color="var(--primary)" />
+                          <span>تعديل</span>
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn-sm"
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: 6,
+                            fontWeight: 700,
+                            padding: '8px 10px',
+                            color: 'var(--danger)',
+                            background: 'rgba(250, 82, 82, 0.08)',
+                            border: '1px solid rgba(250, 82, 82, 0.2)',
+                            borderRadius: 'var(--radius-sm)'
+                          }}
+                          onClick={() => setDeleteCategoryConfirm({ id: cat.id, name: cat.name, count })}
+                        >
+                          <Trash2 size={15} />
+                          <span>حذف</span>
+                        </button>
                       </div>
                     </div>
                   );
@@ -1278,16 +1333,16 @@ export default function App() {
         </div>
       )}
 
-      {/* Modal: Add Category */}
+      {/* Modal: Add/Edit Category */}
       {categoryModalOpen && (
-        <div className="modal-overlay" onClick={() => setCategoryModalOpen(false)}>
+        <div className="modal-overlay" onClick={() => { setCategoryModalOpen(false); setEditingCategory(null); }}>
           <div className="modal-dialog" style={{ maxWidth: 520 }} onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3>
                 <Tags size={22} color="var(--primary)" />
-                <span>إضافة قسم جديد للمطبخ</span>
+                <span>{editingCategory ? `تعديل قسم: ${editingCategory.name}` : 'إضافة قسم جديد للمطبخ'}</span>
               </h3>
-              <button className="modal-close-btn" onClick={() => setCategoryModalOpen(false)}>
+              <button className="modal-close-btn" onClick={() => { setCategoryModalOpen(false); setEditingCategory(null); }}>
                 <X size={20} />
               </button>
             </div>
@@ -1307,7 +1362,7 @@ export default function App() {
                       setCategoryFormData(prev => ({
                         ...prev,
                         name: name,
-                        id: prev.idManual ? prev.id : name.trim().toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '') || prev.id
+                        id: editingCategory ? prev.id : (prev.idManual ? prev.id : name.trim().toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '') || prev.id)
                       }));
                     }}
                   />
@@ -1340,16 +1395,18 @@ export default function App() {
                 </div>
 
                 <div className="form-group" style={{ marginBottom: 16 }}>
-                  <label className="form-label">معرّف القسم بالإنجليزي (ID) - اختياري</label>
+                  <label className="form-label">معرّف القسم بالإنجليزي (ID) {editingCategory ? '(ثابت)' : '- اختياري'}</label>
                   <input 
                     type="text"
                     placeholder="مثال: seafood, grills, soups (يتم توليده تلقائياً إذا ترك فارغاً)"
                     className="form-input"
                     value={categoryFormData.id}
+                    disabled={!!editingCategory}
+                    style={editingCategory ? { background: 'var(--bg)', cursor: 'not-allowed', opacity: 0.8 } : {}}
                     onChange={(e) => setCategoryFormData({ ...categoryFormData, id: e.target.value, idManual: true })}
                   />
                   <small style={{ color: 'var(--text-secondary)', fontSize: 11, marginTop: 4, display: 'block' }}>
-                    يستخدم لربط الأكلات بالتصنيف برمجياً
+                    {editingCategory ? 'معرّف القسم ثابت للحفاظ على ربط الوصفات الموجودة بالتصنيف' : 'يستخدم لربط الأكلات بالتصنيف برمجياً'}
                   </small>
                 </div>
 
@@ -1366,14 +1423,50 @@ export default function App() {
               </div>
 
               <div className="modal-footer">
-                <button type="button" className="btn btn-secondary" onClick={() => setCategoryModalOpen(false)}>
+                <button type="button" className="btn btn-secondary" onClick={() => { setCategoryModalOpen(false); setEditingCategory(null); }}>
                   إلغاء
                 </button>
                 <button type="submit" className="btn btn-primary">
-                  حفظ وإضافة القسم
+                  {editingCategory ? 'حفظ تعديلات القسم' : 'حفظ وإضافة القسم'}
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Delete Category Confirmation */}
+      {deleteCategoryConfirm && (
+        <div className="modal-overlay" onClick={() => setDeleteCategoryConfirm(null)}>
+          <div className="modal-dialog" style={{ maxWidth: 460 }} onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3 style={{ color: 'var(--danger)' }}><AlertCircle size={20} /> تأكيد حذف القسم</h3>
+              <button className="modal-close-btn" onClick={() => setDeleteCategoryConfirm(null)}>
+                <X size={20} />
+              </button>
+            </div>
+            <div className="modal-body">
+              <p style={{ fontSize: 15, marginBottom: 10 }}>
+                هل أنت متأكد من رغبتك في حذف قسم <strong>"{deleteCategoryConfirm.name}"</strong> نهائياً من التطبيق؟
+              </p>
+              {deleteCategoryConfirm.count > 0 && (
+                <div style={{
+                  background: 'rgba(250, 82, 82, 0.08)',
+                  border: '1px solid rgba(250, 82, 82, 0.2)',
+                  borderRadius: 'var(--radius-sm)',
+                  padding: '10px 14px',
+                  color: 'var(--danger)',
+                  fontSize: 13,
+                  marginTop: 10
+                }}>
+                  ⚠️ <strong>تنبيه:</strong> يوجد حالياً <strong>{deleteCategoryConfirm.count} وصفة</strong> مرتبطة بهذا القسم.
+                </div>
+              )}
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-secondary" onClick={() => setDeleteCategoryConfirm(null)}>إلغاء</button>
+              <button className="btn btn-danger" onClick={handleConfirmDeleteCategory}>نعم، احذف هذا القسم</button>
+            </div>
           </div>
         </div>
       )}
