@@ -99,7 +99,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           width: 34,
                           height: 34,
                           fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => const Text('🔥', style: TextStyle(fontSize: 24)),
+                          errorBuilder: (_, _, _) => const Text('🔥', style: TextStyle(fontSize: 24)),
                         ),
                       ),
                       const SizedBox(width: 8),
