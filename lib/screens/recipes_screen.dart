@@ -3,6 +3,7 @@ import 'package:matebakhna/screens/widget/app_bar.dart';
 
 import '../models/recipe.dart';
 import '../services/storage_service.dart';
+import '../services/api_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/recipe_card.dart';
 import 'recipe_detail_screen.dart';
@@ -29,7 +30,7 @@ class _RecipesScreenState extends State<RecipesScreen> {
   void initState() {
     super.initState();
     _selectedCategory = widget.initialCategory;
-    _allRecipes = StorageService.getAllRecipes();
+    _loadRecipes();
   }
 
   void _loadRecipes() {
@@ -38,6 +39,14 @@ class _RecipesScreenState extends State<RecipesScreen> {
 
     setState(() {
       _allRecipes = recipes;
+    });
+
+    ApiService.fetchRecipes().then((latest) {
+      if (mounted) {
+        setState(() {
+          _allRecipes = latest;
+        });
+      }
     });
   }
 
@@ -111,14 +120,28 @@ class _RecipesScreenState extends State<RecipesScreen> {
       appBar: CustomAppBar.batbakhnaBar(
         context: context,
         title: 'دليل وصفات طبختنا',
-        wid: IconButton(
-          onPressed: _addRecipe,
-          tooltip: 'إضافة وصفة جديدة',
-          icon: const Icon(
-            Icons.add_circle_rounded,
-            color: AppTheme.primary,
-            size: 30,
-          ),
+        wid: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              onPressed: _loadRecipes,
+              tooltip: 'تحديث الوصفات من السيرفر',
+              icon: const Icon(
+                Icons.refresh_rounded,
+                color: AppTheme.primary,
+                size: 26,
+              ),
+            ),
+            IconButton(
+              onPressed: _addRecipe,
+              tooltip: 'إضافة وصفة جديدة',
+              icon: const Icon(
+                Icons.add_circle_rounded,
+                color: AppTheme.primary,
+                size: 30,
+              ),
+            ),
+          ],
         ),
       ),
       body: SafeArea(
@@ -339,12 +362,15 @@ class _RecipesScreenState extends State<RecipesScreen> {
 
             // Recipe results
             Expanded(
-              child: filtered.isEmpty
-                  ? _emptyState(hasFilters: hasFilters)
-                  : RefreshIndicator(
-                      color: AppTheme.primary,
-                      onRefresh: () async => _loadRecipes(),
-                      child: ListView.builder(
+              child: RefreshIndicator(
+                color: AppTheme.primary,
+                onRefresh: () async => _loadRecipes(),
+                child: filtered.isEmpty
+                    ? SingleChildScrollView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        child: _emptyState(hasFilters: hasFilters),
+                      )
+                    : ListView.builder(
                         physics: const AlwaysScrollableScrollPhysics(),
                         padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
                         itemCount: filtered.length,

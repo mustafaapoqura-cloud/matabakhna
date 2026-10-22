@@ -1,11 +1,11 @@
 import 'dart:math';
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:matebakhna/screens/shopping_list_screen.dart';
 import 'package:matebakhna/screens/widget/app_bar.dart';
 import '../models/recipe.dart';
 import '../models/budget_plan.dart';
 import '../services/storage_service.dart';
+import '../services/api_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/recipe_card.dart';
 import '../widgets/budget_summary_card.dart';
@@ -43,6 +43,21 @@ class _HomeScreenState extends State<HomeScreen> {
         _dishOfTheDay = _allRecipes[dayOfYear % _allRecipes.length];
       }
     });
+
+    // Sync with PHP backend in background
+    ApiService.fetchRecipes().then((latest) {
+      if (mounted) {
+        setState(() {
+          _allRecipes = latest;
+          if (_allRecipes.isNotEmpty) {
+            final dayOfYear = DateTime.now().difference(DateTime(DateTime.now().year, 1, 1)).inDays;
+            _dishOfTheDay = _allRecipes[dayOfYear % _allRecipes.length];
+          } else {
+            _dishOfTheDay = null;
+          }
+        });
+      }
+    });
   }
 
   @override
@@ -50,7 +65,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final screens = [
       _buildHomeDashboard(),
       const BudgetPlannerScreen(),
-      const RecipesScreen(),
+      RecipesScreen(key: ValueKey('recipes_screen_$_currentIndex')),
       const MealPlannerScreen(),
     ];
 
@@ -81,21 +96,21 @@ bottomNavigationBar: ClipRRect(
     ),
     child: Container(
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.18),
+        color: Colors.white.withValues(alpha: 0.18),
         borderRadius: const BorderRadius.only(
           topLeft: Radius.circular(35),
           topRight: Radius.circular(35),
         ),
         border: Border.all(
-          color: Colors.white.withOpacity(0.45),
+          color: Colors.white.withValues(alpha: 0.45),
           width: 1.2,
         ),
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
-            Colors.white.withOpacity(0.35),
-            Colors.white.withOpacity(0.12),
+            Colors.white.withValues(alpha: 0.35),
+            Colors.white.withValues(alpha: 0.12),
           ],
         ),
       ),
@@ -162,7 +177,7 @@ Widget _navIcon(IconData icon, String label, int index) {
         boxShadow: selected
             ? [
                 BoxShadow(
-                  color: AppTheme.primary.withOpacity(0.6),
+                  color: AppTheme.primary.withValues(alpha: 0.6),
                   blurRadius: 8,
                   offset: const Offset(0, 6),
                 ),

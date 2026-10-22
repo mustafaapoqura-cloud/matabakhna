@@ -1,5 +1,4 @@
 import 'dart:math' as math;
-import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -236,7 +235,7 @@ class SeaPainter extends CustomPainter {
     // الطبقة الخلفية (أبعد، أفتح شوية، حركتها أهدى)
     final Paint backPaint = Paint()
       ..style = PaintingStyle.fill
-      ..color = color.withOpacity(0.55);
+      ..color = color.withValues(alpha: 0.55);
 
     final Path backPath = _buildWavePath(
       size,
