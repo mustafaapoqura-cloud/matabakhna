@@ -47,7 +47,7 @@ class ApiService {
 
           // Save backend recipes locally in cache
           await StorageService.cacheRemoteRecipes(recipes);
-          return StorageService.getAllRecipes();
+          return recipes;
         }
       }
     } catch (e) {
